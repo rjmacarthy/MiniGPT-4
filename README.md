@@ -1,6 +1,6 @@
 ## MiniGPT-4-ui
 
-This clone of https://github.com/Vision-CAIR/MiniGPT-4 which also provides a simple ui and API.
+This is a fork of https://github.com/Vision-CAIR/MiniGPT-4 which also provides a simple ui and API.
 
 ### Usage
 
