@@ -1,0 +1,1 @@
+python -m fastchat.model.apply_delta --base  /models/llama-7b --target /models/vicuna-minigpt4 --delta /models/vicuna-7b-delta-v0
