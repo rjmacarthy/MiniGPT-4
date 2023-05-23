@@ -2,3 +2,4 @@ __pycache__
 ./models
 ui/node_modules
 minigpt4/configs/models/minigpt4.yaml
+eval_configs/minigpt4_eval.yaml
