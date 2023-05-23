@@ -74,6 +74,7 @@ function App() {
         isClosable: true,
       });
       setDescriptions([]);
+      localStorage.removeItem('descriptions');
     } catch {
       alert('Error resetting');
     }
@@ -120,7 +121,7 @@ function App() {
                   multiple
                   onChange={e => setImages(Array.from(e.target.files))}
                 >
-                  <Button isDisabled={isLoading}>Attatch</Button>
+                  <Button isDisabled={isLoading}>Attatch images</Button>
                 </FileUpload>
               </Box>
               <Button
@@ -168,12 +169,12 @@ function App() {
             </Box>
             <Button
               type="submit"
-              colorScheme="blue"
+              colorScheme="green"
               mt={2}
               isLoading={isGenerating}
               isDisabled={isLoading}
             >
-              Generate
+              Generate descriptions
             </Button>
           </form>
         </Box>

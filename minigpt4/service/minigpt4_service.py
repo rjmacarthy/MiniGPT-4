@@ -66,7 +66,7 @@ class MiniGPT4Service:
             top_p=0.9,
             repetition_penalty=1.0,
             length_penalty=1,
-            temperature=0.5,
+            temperature=1.2,
         )
         return self.get_output_text(outputs)
 
