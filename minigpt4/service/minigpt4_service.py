@@ -85,6 +85,9 @@ class MiniGPT4Service:
         for image_embedding in self.image_embeddings:
             responses.append(self.answer(message, image_embedding=image_embedding[0]))
         return responses
+    
+    def reset (self):
+        self.image_embeddings = []
 
     def get_embeddings(self, message, image_embedding):
         prompt = self.get_prompt(message)
