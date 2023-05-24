@@ -8,12 +8,16 @@ import {
   Heading,
   Divider,
   useToast,
+  Image,
+  Card,
+  Text,
 } from '@chakra-ui/react';
 import { FileUpload } from './Upload';
-import { generate, uploadFiles, reset } from './api';
+import { generate, uploadFiles } from './api';
 
 import './App.css';
 import { db } from './db';
+import theme from './theme';
 
 function App() {
   const [images, setImages] = React.useState([]);
@@ -38,7 +42,7 @@ function App() {
 
     try {
       setIsUploading(true);
-      await uploadFiles(images);
+      const data = await uploadFiles(images);
       toast({
         title: 'Upload successful',
         description: 'Images have been uploaded.',
@@ -46,6 +50,7 @@ function App() {
         duration: 9000,
         isClosable: true,
       });
+      console.log(data);
       setImages([]);
       setIsUploading(false);
     } catch {
@@ -62,24 +67,6 @@ function App() {
     db.set('descriptions', response);
   };
 
-  const handleReset = async e => {
-    e.preventDefault();
-    try {
-      await reset();
-      toast({
-        title: 'Reset successful',
-        description: 'Images have been reset.',
-        status: 'success',
-        duration: 9000,
-        isClosable: true,
-      });
-      setDescriptions([]);
-      localStorage.removeItem('descriptions');
-    } catch {
-      alert('Error resetting');
-    }
-  };
-
   const handleExport = async e => {
     debugger;
     const json = JSON.stringify(descriptions);
@@ -91,8 +78,9 @@ function App() {
     link.click();
   };
 
+  console.log(theme);
   return (
-    <ChakraProvider>
+    <ChakraProvider theme={theme}>
       <Box
         bg="gray.900"
         w="20%"
@@ -103,25 +91,36 @@ function App() {
         overflowY="scroll"
       >
         <Box p={4}>
-          <Box>
-            <Heading as="h2" size="md" my={2}>
-              Instructions
-            </Heading>
-            <p>1. Attatch images</p>
-            <p>2. Upload images</p>
-            <p>2. Enter a prompt</p>
-            <p>3. Click Generate</p>
-            <p>4. Reset</p>
-          </Box>
           <form onSubmit={handleUploadImages}>
-            <Flex mr={2} my={2}>
+            <Card width={'100%'} p={2}>
+              {images.length === 0 && (
+                <Text>
+                  No images selected...
+                </Text>
+              )}
+              <Flex gap={3} flexWrap="wrap">
+                {images.map((image, index) => (
+                  <Box>
+                    <Image
+                      borderRadius={4}
+                      key={index}
+                      src={URL.createObjectURL(image)}
+                      alt={image.name}
+                      boxSize={70}
+                      objectFit="cover"
+                    />
+                  </Box>
+                ))}
+              </Flex>
+            </Card>
+            <Flex mt={2} justifyContent="flex-end">
               <Box mr={2}>
                 <FileUpload
                   accept={'image/*'}
                   multiple
                   onChange={e => setImages(Array.from(e.target.files))}
                 >
-                  <Button isDisabled={isLoading}>Attatch images</Button>
+                  <Button isDisabled={isLoading}>Select images</Button>
                 </FileUpload>
               </Box>
               <Button
@@ -133,24 +132,6 @@ function App() {
               >
                 Upload
               </Button>
-              <Button
-                onClick={handleReset}
-                colorScheme="red"
-                isDisabled={isLoading}
-              >
-                Reset
-              </Button>
-            </Flex>
-            <Flex>
-              {images.map((image, index) => (
-                <Box mr={2}>
-                  <img
-                    key={index}
-                    src={URL.createObjectURL(image)}
-                    alt={image.name}
-                  />
-                </Box>
-              ))}
             </Flex>
           </form>
         </Box>
@@ -178,6 +159,7 @@ function App() {
             </Button>
           </form>
         </Box>
+        <Divider />
       </Box>
       <Box
         bg="gray.800"

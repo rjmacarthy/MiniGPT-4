@@ -2,6 +2,8 @@ from fastapi import FastAPI, UploadFile
 from typing import List
 import argparse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 
 import uvicorn
 
@@ -11,6 +13,8 @@ from pydantic import BaseModel as PydanticBaseModel
 from minigpt4.common.config import Config
 from minigpt4.common.registry import registry
 from minigpt4.service.minigpt4_service import MiniGPT4Service
+from minigpt4.database.repository import Repository
+from minigpt4.database.models import Image
 
 
 def parse_args():
@@ -56,7 +60,6 @@ class Message(PydanticBaseModel):
 if __name__ == "__main__":
     app = FastAPI()
     app.cors = True
-    # allow localhost 3000
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:3000"],
@@ -69,12 +72,17 @@ if __name__ == "__main__":
 
     @app.post("/upload")
     async def upload(images: List[UploadFile]):
-        for image in images:
-            await minigpt4_service.upload_img(image)
+        images = await minigpt4_service.upload_images(images)
+        return JSONResponse(content=jsonable_encoder(images))
             
     @app.post("/reset")
     async def reset():
         return minigpt4_service.reset()
+    
+    @app.post("/list_images")
+    async def list_images():
+        images = await minigpt4_service.list_images()
+        return JSONResponse(content=jsonable_encoder(images))
 
     @app.post("/generate")
     async def generate(message: Message):

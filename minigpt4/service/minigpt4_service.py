@@ -1,9 +1,11 @@
 import io
+from base64 import b64encode
 from PIL import Image
 
 import torch
 from transformers import StoppingCriteria, StoppingCriteriaList
-
+from minigpt4.database.models import Image as ImageModel
+from minigpt4.database.repository import Repository
 
 class StoppingCriteriaSub(StoppingCriteria):
     def __init__(self, stops=[]):
@@ -24,6 +26,7 @@ class MiniGPT4Service:
         self.model = model
         self.image_embeddings = []
         self.vis_processor = vis_processor
+        self.image_repository = Repository(ImageModel)
         stop_words_ids = [
             torch.tensor([835]).to(self.device),
             torch.tensor([2277, 29937]).to(self.device),
@@ -70,12 +73,19 @@ class MiniGPT4Service:
         )
         return self.get_output_text(outputs)
 
-    async def upload_img(self, image):
-        contents = await image.read()
-        raw_image = Image.open(io.BytesIO(contents)).convert("RGB")
-        image = self.vis_processor(raw_image).unsqueeze(0).to(self.device)
-        embeddings = self.model.encode_img(image)
-        self.image_embeddings.append(embeddings)
+    async def upload_images(self, images):
+        for image in images:
+            contents = await image.read()
+            base64_representation = b64encode(contents).decode("utf-8")
+            raw_image = Image.open(io.BytesIO(contents)).convert("RGB")
+            image = self.vis_processor(raw_image).unsqueeze(0).to(self.device)
+            self.image_repository.create(
+                base64_representation=base64_representation,
+            )
+        return self.image_repository.list()
+    
+    def list_images(self):
+        return self.image_repository.list()
 
     def get_prompt(self, message):
         return f"""'Given the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my question.###Human: <Img><ImageHere></Img> {message} ###Assistant:'"""
