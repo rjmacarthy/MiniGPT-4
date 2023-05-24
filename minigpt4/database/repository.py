@@ -1,10 +1,10 @@
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import select
-from sqlalchemy.ext.declarative import declarative_base
-
 from sqlalchemy import create_engine
 from sqlalchemy_utils import create_database, database_exists
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import select
 from sqlalchemy.sql import text
+from typing import List
 
 
 Base = declarative_base()
@@ -55,7 +55,7 @@ class Repository:
         with self.session() as session:
             entity = session.query(self.model_type).get(id)
         return entity
-    
+
     def list(self):
         with self.session() as session:
             entities = session.query(self.model_type).all()
@@ -89,6 +89,23 @@ class Repository:
             session.delete(entity)
             session.commit()
         return entity
+
+    def delete_by_ids(self, ids: List[int]):
+        with self.session() as session:
+            entities = (
+                session.query(self.model_type).filter(self.model_type.id.in_(ids)).all()
+            )
+            for entity in entities:
+                session.delete(entity)
+            session.commit()
+        return entities
+    
+    def get_by_ids(self, ids: List[int]):
+        with self.session() as session:
+            entities = (
+                session.query(self.model_type).filter(self.model_type.id.in_(ids)).all()
+            )
+        return entities
 
     def delete_all(self):
         with self.session() as session:

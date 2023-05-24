@@ -7,6 +7,7 @@ from transformers import StoppingCriteria, StoppingCriteriaList
 from minigpt4.database.models import Image as ImageModel
 from minigpt4.database.repository import Repository
 
+
 class StoppingCriteriaSub(StoppingCriteria):
     def __init__(self, stops=[]):
         super().__init__()
@@ -77,27 +78,31 @@ class MiniGPT4Service:
         for image in images:
             contents = await image.read()
             base64_representation = b64encode(contents).decode("utf-8")
-            raw_image = Image.open(io.BytesIO(contents)).convert("RGB")
-            image = self.vis_processor(raw_image).unsqueeze(0).to(self.device)
             self.image_repository.create(
                 base64_representation=base64_representation,
             )
         return self.image_repository.list()
-    
-    def list_images(self):
+
+    async def list_images(self):
+        return self.image_repository.list()
+
+    async def delete_images(self, image_ids):
+        self.image_repository.delete_by_ids(image_ids)
         return self.image_repository.list()
 
     def get_prompt(self, message):
         return f"""'Given the following image: <Img>ImageContent</Img>. You will be able to see the image once I provide it to you. Please answer my question.###Human: <Img><ImageHere></Img> {message} ###Assistant:'"""
 
-    def generate(self, message):
-        responses = []
-        for image_embedding in self.image_embeddings:
-            responses.append(self.answer(message, image_embedding=image_embedding[0]))
-        return responses
-    
-    def reset (self):
-        self.image_embeddings = []
+    def generate(self, prompt, image_ids):
+        descriptions = []
+        images = self.image_repository.get_by_ids(image_ids)
+        for image in images:
+            raw_image = Image.open(io.BytesIO(b64encode(image.base64_representation))).convert("RGB")
+            image_embedding = self.vis_processor(raw_image).unsqueeze(0).to(self.device)
+            description = self.answer(prompt, image_embedding=image_embedding[0])
+            descriptions.append(prompt)
+            self.image_repository.update(image.id, image_description=description)
+        return descriptions
 
     def get_embeddings(self, message, image_embedding):
         prompt = self.get_prompt(message)

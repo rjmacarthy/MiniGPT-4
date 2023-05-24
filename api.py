@@ -13,8 +13,6 @@ from pydantic import BaseModel as PydanticBaseModel
 from minigpt4.common.config import Config
 from minigpt4.common.registry import registry
 from minigpt4.service.minigpt4_service import MiniGPT4Service
-from minigpt4.database.repository import Repository
-from minigpt4.database.models import Image
 
 
 def parse_args():
@@ -53,8 +51,12 @@ def get_minigpt4_service():
     return minigpt4_service
 
 
-class Message(PydanticBaseModel):
-    message: str
+class GenerateRequest(PydanticBaseModel):
+    prompt: str
+    image_ids: List[int]
+    
+class DeleteImageRequest(PydanticBaseModel):
+    image_ids: List[int]
 
 
 if __name__ == "__main__":
@@ -67,25 +69,30 @@ if __name__ == "__main__":
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     minigpt4_service = get_minigpt4_service()
 
     @app.post("/upload")
     async def upload(images: List[UploadFile]):
         images = await minigpt4_service.upload_images(images)
         return JSONResponse(content=jsonable_encoder(images))
-            
+
     @app.post("/reset")
     async def reset():
         return minigpt4_service.reset()
-    
-    @app.post("/list_images")
+
+    @app.post("/delete_images")
+    async def delete_images(request: DeleteImageRequest):
+        images = await minigpt4_service.delete_images(request.image_ids)
+        return JSONResponse(content=jsonable_encoder(images))
+
+    @app.get("/list_images")
     async def list_images():
         images = await minigpt4_service.list_images()
         return JSONResponse(content=jsonable_encoder(images))
 
     @app.post("/generate")
-    async def generate(message: Message):
-        return minigpt4_service.generate(message.message)
+    async def generate(request: GenerateRequest):
+        return minigpt4_service.generate(request.prompt, request.image_ids)
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
