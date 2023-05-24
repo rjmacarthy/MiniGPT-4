@@ -2,8 +2,6 @@ import axios from 'axios';
 
 const apiUrl = 'http://localhost:8000'
 
-
-
 export const uploadFiles = async (files) => {
   const formData = new FormData();
   files.forEach((file) => {
