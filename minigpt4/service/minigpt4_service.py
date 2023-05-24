@@ -1,5 +1,5 @@
 import io
-from base64 import b64encode
+from base64 import b64encode, b64decode
 from PIL import Image
 
 import torch
@@ -97,10 +97,11 @@ class MiniGPT4Service:
         descriptions = []
         images = self.image_repository.get_by_ids(image_ids)
         for image in images:
-            raw_image = Image.open(io.BytesIO(b64encode(image.base64_representation))).convert("RGB")
-            image_embedding = self.vis_processor(raw_image).unsqueeze(0).to(self.device)
-            description = self.answer(prompt, image_embedding=image_embedding[0])
-            descriptions.append(prompt)
+            raw_image = Image.open(io.BytesIO(b64decode(image.base64_representation))).convert("RGB")
+            image = self.vis_processor(raw_image).unsqueeze(0).to(self.device)
+            embeddings = self.model.encode_img(image)
+            description = self.answer(prompt, image_embedding=embeddings[0])
+            descriptions.append(description)
             self.image_repository.update(image.id, image_description=description)
         return descriptions
 
