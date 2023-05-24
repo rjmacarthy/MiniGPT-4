@@ -98,8 +98,8 @@ class MiniGPT4Service:
         images = self.image_repository.get_by_ids(image_ids)
         for image in images:
             raw_image = Image.open(io.BytesIO(b64decode(image.base64_representation))).convert("RGB")
-            image = self.vis_processor(raw_image).unsqueeze(0).to(self.device)
-            embeddings = self.model.encode_img(image)
+            vis_image = self.vis_processor(raw_image).unsqueeze(0).to(self.device)
+            embeddings = self.model.encode_img(vis_image)
             description = self.answer(prompt, image_embedding=embeddings[0])
             descriptions.append(description)
             self.image_repository.update(image.id, image_description=description)
