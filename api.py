@@ -64,6 +64,7 @@ if __name__ == "__main__":
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    
     minigpt4_service = get_minigpt4_service()
 
     @app.post("/upload")
